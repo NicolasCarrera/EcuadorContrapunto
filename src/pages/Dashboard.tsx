@@ -17,6 +17,7 @@ export interface Dialogo {
   video: File | null
   videoUrl?: string
   processing?: boolean
+  error?: string
 }
 
 const Dashboard: React.FC = () => {
@@ -46,7 +47,7 @@ const Dashboard: React.FC = () => {
   const handleVideoChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file && file.type === 'video/mp4') {
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, video: file, videoUrls: undefined, processing: false } : d))
+      setDialogos(dialogos.map(d => d.index === index ? { ...d, video: file, videoUrl: undefined, processing: false, error: undefined } : d))
     } else {
       alert('Please select a valid MP4 video file')
     }
@@ -56,18 +57,17 @@ const Dashboard: React.FC = () => {
     const dialogo = dialogos.find(d => d.index === index)
     if (!dialogo || !dialogo.character || !dialogo.video) return
 
-    setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: true } : d))
+    setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: true, error: undefined } : d))
     try {
       const videoData: DialogVideoData = {
         character: dialogo.character,
         video: dialogo.video
       }
       const videoResponse = await generateVideos(videoData)
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrls: videoResponse.output, processing: false } : d))
+      setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrl: videoResponse.output, processing: false, error: undefined } : d))
     } catch (error) {
       console.error('Error generating video:', error)
-      alert('Error generating video')
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: false } : d))
+      setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: false, error: 'Error generating video' } : d))
     }
   }
 
@@ -82,8 +82,9 @@ const Dashboard: React.FC = () => {
       setDialogos(dialogs.map((d: { index: number, character: Character, dialog: string }) => ({
         ...d,
         video: null,
-        videoUrls: undefined,
-        processing: false
+        videoUrl: undefined,
+        processing: false,
+        error: undefined
       })))
     } catch (error) {
       console.error('Error generating news script:', error)

@@ -2,7 +2,8 @@ import React, { useRef } from 'react'
 import Select from './Select'
 import Textarea from './Textarea'
 import Tooltip from './Tooltip'
-import { FileUploadIcon, SparklesIcon, DownloadIcon, CheckIcon } from './icons'
+import Alert from './Alert'
+import { FileUploadIcon, SparklesIcon, DownloadIcon, CheckIcon, SpinnerIcon } from './icons'
 import type { Dialogo } from '../pages/Dashboard'
 
 interface DialogProps {
@@ -48,7 +49,7 @@ const Dialog: React.FC<DialogProps> = ({ dialog, onUpdate, onVideoChange, onGene
         <div className="flex items-center space-x-1">
           <Tooltip id={`generate-tooltip-${dialog.index}`} content="Generate Video">
             <button type="button" onClick={handleGenerate} className={`p-2 rounded-sm cursor-pointer ${dialog.processing || !dialog.video ? 'text-gray-500' : 'text-gray-900'}`} disabled={dialog.processing || !dialog.video}>
-              <SparklesIcon />
+              {dialog.processing ? <SpinnerIcon /> : <SparklesIcon />}
               <span className="sr-only">Generate video</span>
             </button>
           </Tooltip>
@@ -83,14 +84,7 @@ const Dialog: React.FC<DialogProps> = ({ dialog, onUpdate, onVideoChange, onGene
             rows={4}
           />
         </div>
-        {dialog.processing && <p className="text-sm text-blue-500 mt-2">Processing video...</p>}
-        {dialog.videoUrl && (
-          <div className="mt-2">
-            <a href={dialog.videoUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline block">
-              Generated Video: {dialog.videoUrl}
-            </a>
-          </div>
-        )}
+        {dialog.error && <Alert message={dialog.error} />}
       </div>
       <input
         ref={fileInputRef}
