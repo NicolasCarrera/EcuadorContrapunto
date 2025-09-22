@@ -4,6 +4,7 @@ import Input from '../components/Input'
 import Button from '../components/Button'
 import Textarea from '../components/Textarea'
 import Dialog from '../components/Dialog'
+import Alert from '../components/Alert'
 import { generateNewsScript, generateVideos, type Character } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
@@ -26,6 +27,7 @@ const Dashboard: React.FC = () => {
   const [dialogos, setDialogos] = useState<Dialogo[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -48,8 +50,9 @@ const Dashboard: React.FC = () => {
     const file = e.target.files?.[0]
     if (file && file.type === 'video/mp4') {
       setDialogos(dialogos.map(d => d.index === index ? { ...d, video: file, videoUrl: undefined, processing: false, error: undefined } : d))
+      setAlertMessage(null)
     } else {
-      alert('Please select a valid MP4 video file')
+      setAlertMessage('Por favor selecciona un archivo de video MP4 válido')
     }
   }
 
@@ -67,12 +70,13 @@ const Dashboard: React.FC = () => {
       setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrl: videoResponse.output, processing: false, error: undefined } : d))
     } catch (error) {
       console.error('Error generating video:', error)
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: false, error: 'Error generating video' } : d))
+      setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: false, error: 'Error al generar el video' } : d))
     }
   }
 
   const handleGenerate = async (query?: string) => {
     setLoading(true)
+    setAlertMessage(null)
     try {
       const response = await generateNewsScript(query)
       console.log('API Response:', response) // Debug log
@@ -88,7 +92,7 @@ const Dashboard: React.FC = () => {
       })))
     } catch (error) {
       console.error('Error generating news script:', error)
-      alert('Error generating news script')
+      setAlertMessage('Error al generar el guion de noticias')
     }
     setLoading(false)
   }
@@ -102,6 +106,7 @@ const Dashboard: React.FC = () => {
           Logout
         </Button>
       </div>
+      {alertMessage && <Alert message={alertMessage} />}
       <div className="mb-6 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
         <label className="block text-gray-700 text-sm font-bold mb-2">
           Consulta de Búsqueda (opcional)

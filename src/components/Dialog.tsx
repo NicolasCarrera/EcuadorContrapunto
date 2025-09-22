@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import Select from './Select'
 import Textarea from './Textarea'
 import Tooltip from './Tooltip'
@@ -15,6 +15,7 @@ interface DialogProps {
 
 const Dialog: React.FC<DialogProps> = ({ dialog, onUpdate, onVideoChange, onGenerate }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
@@ -22,9 +23,10 @@ const Dialog: React.FC<DialogProps> = ({ dialog, onUpdate, onVideoChange, onGene
 
   const handleGenerate = async () => {
     if (!dialog.character || !dialog.video) {
-      alert('Please select character and upload video')
+      setAlertMessage('Por favor selecciona un personaje y sube un video')
       return
     }
+    setAlertMessage(null)
     await onGenerate()
   }
 
@@ -84,6 +86,7 @@ const Dialog: React.FC<DialogProps> = ({ dialog, onUpdate, onVideoChange, onGene
             rows={4}
           />
         </div>
+        {alertMessage && <Alert message={alertMessage} />}
         {dialog.error && <Alert message={dialog.error} />}
       </div>
       <input
