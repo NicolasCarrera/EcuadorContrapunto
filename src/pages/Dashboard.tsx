@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
+'use client'
+
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { ChangeEvent } from 'react'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import Textarea from '../components/Textarea'
@@ -21,7 +24,7 @@ export interface Dialogo {
   error?: string
 }
 
-const Dashboard: React.FC = () => {
+function Dashboard() {
   const [title, setTitle] = useState('')
   const [resumen, setResumen] = useState('')
   const [dialogos, setDialogos] = useState<Dialogo[]>([])
@@ -46,7 +49,7 @@ const Dashboard: React.FC = () => {
     setDialogos(dialogos.map(d => d.index === index ? { ...d, [field]: value } : d))
   }
 
-  const handleVideoChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file && file.type === 'video/mp4') {
       setDialogos(dialogos.map(d => d.index === index ? { ...d, video: file, videoUrl: undefined, processing: false, error: undefined } : d))
@@ -79,7 +82,7 @@ const Dashboard: React.FC = () => {
     setAlertMessage(null)
     try {
       const response = await generateNewsScript(query)
-      console.log('API Response:', response) // Debug log
+      console.log('API Response:', response)
       setTitle(response.title || '')
       setResumen(response.summary || '')
       const dialogs = response.dialogs || []
@@ -99,54 +102,54 @@ const Dashboard: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Ecuador Contrapunto</h1>
+    <main className='min-h-screen bg-gray-100 p-8'>
+      <header className='flex justify-between items-center mb-8'>
+        <h1 className='text-4xl font-bold'>Ecuador Contrapunto</h1>
         <Button onClick={logout} icon={<LogoutIcon />}>
           Logout
         </Button>
-      </div>
+      </header>
       {alertMessage && <Alert message={alertMessage} />}
-      <div className="mb-6 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+      <section className='mb-6 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md'>
+        <label className='block text-gray-700 text-sm font-bold mb-2'>
           Consulta de Búsqueda (opcional)
         </label>
-        <div className="flex gap-4 items-end">
+        <div className='flex gap-4 items-end'>
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Dejar vacío para noticia del día"
-            className="flex-1"
+            placeholder='Dejar vacío para noticia del día'
+            className='flex-1'
           />
-          <Button type="button" onClick={() => handleGenerate(searchQuery || undefined)} loading={loading} icon={<SparklesIcon />}>
+          <Button type='button' onClick={() => handleGenerate(searchQuery || undefined)} loading={loading} icon={<SparklesIcon />}>
             {loading ? 'Generando...' : 'Generar'}
           </Button>
         </div>
-      </div>
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title">
+      </section>
+      <section className='max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md'>
+        <div className='mb-4'>
+          <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='title'>
             Title
           </label>
           <Input
-            id="title"
+            id='title'
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
         </div>
-        <div className="mb-4">
+        <div className='mb-4'>
           <Textarea
-            label="Resumen"
-            id="resumen"
+            label='Resumen'
+            id='resumen'
             value={resumen}
             onChange={(e) => setResumen(e.target.value)}
             rows={4}
             required
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+        <div className='mb-4'>
+          <label className='block text-gray-700 text-sm font-bold mb-2'>
             Dialogos
           </label>
           {dialogos.map((dialogo) => (
@@ -154,16 +157,16 @@ const Dashboard: React.FC = () => {
               key={dialogo.index}
               dialog={dialogo}
               onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => updateDialogo(dialogo.index, field, value)}
-              onVideoChange={(e: React.ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
+              onVideoChange={(e: ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
               onGenerate={() => handleGenerateVideo(dialogo.index)}
             />
           ))}
-          <Button type="button" onClick={addDialogo} icon={<AddIcon />}>
+          <Button type='button' onClick={addDialogo} icon={<AddIcon />}>
             Add Dialogo
           </Button>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
 

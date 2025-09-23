@@ -1,11 +1,9 @@
-import React from 'react'
-
 interface AlertProps {
   message: string
   type?: 'danger' | 'success' | 'warning' | 'info'
 }
 
-const Alert: React.FC<AlertProps> = ({ message, type = 'danger' }) => {
+function Alert({ message, type = 'danger' }: AlertProps) {
   const alertClasses = {
     danger: 'text-red-800 bg-red-50',
     success: 'text-green-800 bg-green-50',
@@ -14,8 +12,8 @@ const Alert: React.FC<AlertProps> = ({ message, type = 'danger' }) => {
   }
 
   return (
-    <div className={`p-4 mb-4 text-sm rounded-lg ${alertClasses[type]}`} role="alert">
-      <span className="font-medium">
+    <div className={`p-4 mb-4 text-sm rounded-lg ${alertClasses[type]}`} role='alert'>
+      <span className='font-medium'>
         {message}
       </span>
     </div>

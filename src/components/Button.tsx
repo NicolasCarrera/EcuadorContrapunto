@@ -1,16 +1,16 @@
-import React from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { SpinnerIcon } from './icons'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean
-  icon?: React.ReactNode
+  icon?: ReactNode
   variant?: 'primary' | 'secondary' | 'success' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   textAlign?: 'left' | 'center' | 'right'
 }
 
-const Button: React.FC<ButtonProps> = ({ className, fullWidth, icon, variant = 'primary', size = 'md', loading = false, textAlign = 'center', children, ...props }) => {
+function Button({ className, fullWidth, icon, variant = 'primary', size = 'md', loading = false, textAlign = 'center', children, ...props }: ButtonProps) {
   const variantClasses = {
     primary: 'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300',
     secondary: 'bg-gray-700 hover:bg-gray-800 focus:ring-gray-300',
@@ -33,7 +33,7 @@ const Button: React.FC<ButtonProps> = ({ className, fullWidth, icon, variant = '
       disabled={props.disabled || loading}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${className || ''}`}
     >
-      {loading ? <SpinnerIcon /> : icon && <span className="me-2">{icon}</span>}
+      {loading ? <SpinnerIcon /> : icon && <span className='me-2'>{icon}</span>}
       {children}
     </button>
   )
