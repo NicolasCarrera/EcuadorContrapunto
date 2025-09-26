@@ -15,8 +15,25 @@ export interface DialogVideoData {
   video?: File
 }
 
+export interface HedraVideoData {
+  character: Character
+  dialog: string
+}
+
 export interface VideoResponse {
-  output: string
+  generatedVideo: string
+}
+
+export interface MergeVideoInput {
+  id: string
+  index: number
+  video_url: string
+}
+
+export interface MergeVideoResponse {
+  success: boolean
+  videoUrl?: string
+  error?: string
 }
 
 export const generateNewsScript = async (searchQuery?: string): Promise<NewsScript> => {
@@ -41,7 +58,7 @@ export const generateNewsScript = async (searchQuery?: string): Promise<NewsScri
   }
 }
 
-export const generateVideos = async (data: DialogVideoData): Promise<VideoResponse> => {
+export const generateVideoRunway = async (data: DialogVideoData): Promise<VideoResponse> => {
   const formData = new FormData()
   formData.append('character', data.character)
   if (data.video) {
@@ -61,6 +78,64 @@ export const generateVideos = async (data: DialogVideoData): Promise<VideoRespon
   // Handle if wrapped in array
   const videoData = Array.isArray(result) ? result[0] : result
   return {
-    output: videoData.output || ''
+    generatedVideo: videoData.output || ''
+  }
+}
+
+export const generateVideoHedra = async (data: HedraVideoData): Promise<VideoResponse> => {
+  const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/generate-video-hedra`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      character: data.character,
+      dialog: data.dialog
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to generate video with Hedra')
+  }
+
+  const result = await response.json()
+  // Handle if wrapped in array
+  const videoData = Array.isArray(result) ? result[0] : result
+  return {
+    generatedVideo: videoData['generated video'] || ''
+  }
+}
+
+export const mergeVideos = async (videos: MergeVideoInput[]): Promise<MergeVideoResponse> => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/merge-video`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ videos })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to merge videos')
+    }
+
+    const result = await response.json()
+    const base64Data = result.data
+    if (!base64Data) {
+      throw new Error('No video data received')
+    }
+
+    const videoUrl = `data:video/mp4;base64,${base64Data}`
+    return {
+      success: true,
+      videoUrl
+    }
+  } catch (error) {
+    console.error('Error merging videos:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    }
   }
 }

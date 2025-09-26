@@ -8,7 +8,7 @@ import Button from '../components/Button'
 import Textarea from '../components/Textarea'
 import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
-import { generateNewsScript, generateVideos, type Character } from '../services/n8n/workflow'
+import { generateNewsScript, generateVideoRunway, mergeVideos, type Character } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
@@ -31,6 +31,9 @@ function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null)
+  const [isGeneratingMergedVideo, setIsGeneratingMergedVideo] = useState(false)
+  const [generateMergedError, setGenerateMergedError] = useState<string | null>(null)
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -69,8 +72,8 @@ function Dashboard() {
         character: dialogo.character,
         video: dialogo.video
       }
-      const videoResponse = await generateVideos(videoData)
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrl: videoResponse.output, processing: false, error: undefined } : d))
+      const videoResponse = await generateVideoRunway(videoData)
+      setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrl: videoResponse.generatedVideo, processing: false, error: undefined } : d))
     } catch (error) {
       console.error('Error generating video:', error)
       setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: false, error: 'Error al generar el video' } : d))
@@ -100,6 +103,43 @@ function Dashboard() {
     setLoading(false)
   }
 
+  const handleGenerateMergedVideo = async () => {
+    setIsGeneratingMergedVideo(true)
+    setGenerateMergedError(null)
+    setMergedVideoUrl(null)
+
+    const sampleVideos = [
+      {
+        id: "29213913",
+        index: 1,
+        video_url: "https://www.pexels.com/es-es/download/video/29213913/"
+      },
+      {
+        id: "29304849",
+        index: 2,
+        video_url: "https://www.pexels.com/es-es/download/video/29304849/"
+      },
+      {
+        id: "29263561",
+        index: 3,
+        video_url: "https://www.pexels.com/es-es/download/video/29263561/"
+      }
+    ]
+
+    try {
+      const result = await mergeVideos(sampleVideos)
+      if (result.success && result.videoUrl) {
+        setMergedVideoUrl(result.videoUrl)
+      } else {
+        setGenerateMergedError(result.error || 'Error desconocido al generar el video')
+      }
+    } catch (error) {
+      console.error('Error generating merged video:', error)
+      setGenerateMergedError('Error al generar el video combinado')
+    }
+    setIsGeneratingMergedVideo(false)
+  }
+
 
   return (
     <main className='min-h-screen bg-gray-100 p-8'>
@@ -126,7 +166,7 @@ function Dashboard() {
           </Button>
         </div>
       </section>
-      <section className='max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md'>
+      <section className='mb-6 max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md'>
         <div className='mb-4'>
           <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='title'>
             Title
@@ -165,6 +205,26 @@ function Dashboard() {
             Add Dialogo
           </Button>
         </div>
+      </section>
+      <section className='max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md'>
+        {generateMergedError && <Alert message={generateMergedError} />}
+        <Button
+          type='button'
+          onClick={handleGenerateMergedVideo}
+          loading={isGeneratingMergedVideo}
+          disabled={isGeneratingMergedVideo}
+          fullWidth
+        >
+          {isGeneratingMergedVideo ? 'Generando Video...' : 'Generar Video'}
+        </Button>
+        {mergedVideoUrl && (
+          <div className='mt-4 flex justify-center'>
+            <video controls>
+              <source src={mergedVideoUrl} type='video/mp4' />
+              Tu navegador no soporta el elemento de video.
+            </video>
+          </div>
+        )}
       </section>
     </main>
   )
