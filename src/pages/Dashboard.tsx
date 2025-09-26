@@ -8,7 +8,7 @@ import Button from '../components/Button'
 import Textarea from '../components/Textarea'
 import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
-import { generateNewsScript, generateVideoRunway, mergeVideos, type Character } from '../services/n8n/workflow'
+import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, type Character } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
@@ -22,6 +22,7 @@ export interface Dialogo {
   videoUrl?: string
   processing?: boolean
   error?: string
+  generationType: 'text' | 'video' | null
 }
 
 function Dashboard() {
@@ -45,11 +46,15 @@ function Dashboard() {
   }, [navigate])
 
   const addDialogo = () => {
-    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null }])
+    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: null }])
   }
 
   const updateDialogo = (index: number, field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => {
     setDialogos(dialogos.map(d => d.index === index ? { ...d, [field]: value } : d))
+  }
+
+  const updateGenerationType = (index: number, type: 'text' | 'video' | null) => {
+    setDialogos(dialogos.map(d => d.index === index ? { ...d, generationType: type } : d))
   }
 
   const handleVideoChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
@@ -64,15 +69,26 @@ function Dashboard() {
 
   const handleGenerateVideo = async (index: number) => {
     const dialogo = dialogos.find(d => d.index === index)
-    if (!dialogo || !dialogo.character || !dialogo.video) return
+    if (!dialogo || !dialogo.character || !dialogo.generationType) return
+    if (dialogo.generationType === 'video' && !dialogo.video) return
+    if (dialogo.generationType === 'text' && !dialogo.dialog) return
 
     setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: true, error: undefined } : d))
     try {
-      const videoData: DialogVideoData = {
-        character: dialogo.character,
-        video: dialogo.video
+      let videoResponse
+      if (dialogo.generationType === 'video') {
+        const videoData: DialogVideoData = {
+          character: dialogo.character,
+          video: dialogo.video!
+        }
+        videoResponse = await generateVideoRunway(videoData)
+      } else {
+        const hedraData = {
+          character: dialogo.character,
+          dialog: dialogo.dialog
+        }
+        videoResponse = await generateVideoHedra(hedraData)
       }
-      const videoResponse = await generateVideoRunway(videoData)
       setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrl: videoResponse.generatedVideo, processing: false, error: undefined } : d))
     } catch (error) {
       console.error('Error generating video:', error)
@@ -94,7 +110,8 @@ function Dashboard() {
         video: null,
         videoUrl: undefined,
         processing: false,
-        error: undefined
+        error: undefined,
+        generationType: null
       })))
     } catch (error) {
       console.error('Error generating news script:', error)
@@ -197,6 +214,7 @@ function Dashboard() {
               key={dialogo.index}
               dialog={dialogo}
               onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => updateDialogo(dialogo.index, field, value)}
+              onUpdateGenerationType={(type: 'text' | 'video' | null) => updateGenerationType(dialogo.index, type)}
               onVideoChange={(e: ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
               onGenerate={() => handleGenerateVideo(dialogo.index)}
             />
