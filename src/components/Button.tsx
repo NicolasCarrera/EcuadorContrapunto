@@ -26,12 +26,13 @@ function Button({ className, fullWidth, icon, variant = 'primary', size = 'md', 
 
   const justifyClass = textAlign === 'center' ? 'justify-center' : textAlign === 'right' ? 'justify-end' : 'justify-start'
   const baseClasses = `text-white font-medium rounded-lg focus:outline-none focus:ring-4 ${justifyClass} flex items-center me-2`
+  const disabledClasses = 'bg-gray-400 cursor-not-allowed opacity-50'
 
   return (
     <button
       {...props}
       disabled={props.disabled || loading}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${className || ''}`}
+      className={`${baseClasses} ${(props.disabled || loading) ? disabledClasses : variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${className || ''}`}
     >
       {loading ? <SpinnerIcon /> : icon && <span className='me-2'>{icon}</span>}
       {children}

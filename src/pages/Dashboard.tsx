@@ -8,7 +8,7 @@ import Button from '../components/Button'
 import Textarea from '../components/Textarea'
 import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
-import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, type Character } from '../services/n8n/workflow'
+import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, type Character, type VideoResponse } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
@@ -20,6 +20,7 @@ export interface Dialogo {
   dialog: string
   video: File | null
   videoUrl?: string
+  videoId?: string
   processing?: boolean
   error?: string
   generationType: 'text' | 'video' | null
@@ -46,7 +47,7 @@ function Dashboard() {
   }, [navigate])
 
   const addDialogo = () => {
-    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: null }])
+    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: null, videoId: undefined }])
   }
 
   const updateDialogo = (index: number, field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => {
@@ -67,15 +68,21 @@ function Dashboard() {
     }
   }
 
-  const handleGenerateVideo = async (index: number) => {
-    const dialogo = dialogos.find(d => d.index === index)
-    if (!dialogo || !dialogo.character || !dialogo.generationType) return
-    if (dialogo.generationType === 'video' && !dialogo.video) return
-    if (dialogo.generationType === 'text' && !dialogo.dialog) return
+  const generateVideoForDialogo = async (dialogo: Dialogo): Promise<VideoResponse> => {
+    if (!dialogo.character || !dialogo.generationType) {
+      throw new Error('Dialogo no válido')
+    }
+    if (dialogo.generationType === 'video' && !dialogo.video) {
+      throw new Error('Video requerido para generación de video')
+    }
+    if (dialogo.generationType === 'text' && !dialogo.dialog) {
+      throw new Error('Diálogo requerido para generación de texto')
+    }
 
-    setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: true, error: undefined } : d))
+    setDialogos(prev => prev.map(d => d.index === dialogo.index ? { ...d, processing: true, error: undefined } : d))
+
     try {
-      let videoResponse
+      let videoResponse: VideoResponse
       if (dialogo.generationType === 'video') {
         const videoData: DialogVideoData = {
           character: dialogo.character,
@@ -89,10 +96,35 @@ function Dashboard() {
         }
         videoResponse = await generateVideoHedra(hedraData)
       }
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, videoUrl: videoResponse.generatedVideo, processing: false, error: undefined } : d))
+
+      setDialogos(prev => prev.map(d => d.index === dialogo.index ? {
+        ...d,
+        videoUrl: videoResponse.generatedVideo,
+        videoId: videoResponse.id,
+        processing: false,
+        error: undefined
+      } : d))
+
+      return videoResponse
     } catch (error) {
       console.error('Error generating video:', error)
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, processing: false, error: 'Error al generar el video' } : d))
+      setDialogos(prev => prev.map(d => d.index === dialogo.index ? {
+        ...d,
+        processing: false,
+        error: 'Error al generar el video'
+      } : d))
+      throw error
+    }
+  }
+
+  const handleGenerateVideo = async (index: number) => {
+    const dialogo = dialogos.find(d => d.index === index)
+    if (!dialogo) return
+
+    try {
+      await generateVideoForDialogo(dialogo)
+    } catch (error) {
+      console.error('Error generating video:', error)
     }
   }
 
@@ -109,6 +141,7 @@ function Dashboard() {
         ...d,
         video: null,
         videoUrl: undefined,
+        videoId: undefined,
         processing: false,
         error: undefined,
         generationType: null
@@ -121,30 +154,37 @@ function Dashboard() {
   }
 
   const handleGenerateMergedVideo = async () => {
+    if (dialogos.length <= 1 || dialogos.some(d => !d.generationType)) {
+      return
+    }
+
     setIsGeneratingMergedVideo(true)
     setGenerateMergedError(null)
     setMergedVideoUrl(null)
 
-    const sampleVideos = [
-      {
-        id: "29213913",
-        index: 1,
-        video_url: "https://www.pexels.com/es-es/download/video/29213913/"
-      },
-      {
-        id: "29304849",
-        index: 2,
-        video_url: "https://www.pexels.com/es-es/download/video/29304849/"
-      },
-      {
-        id: "29263561",
-        index: 3,
-        video_url: "https://www.pexels.com/es-es/download/video/29263561/"
-      }
-    ]
-
     try {
-      const result = await mergeVideos(sampleVideos)
+      const videosToMerge = []
+
+      for (const dialogo of dialogos) {
+        if (dialogo.videoUrl && dialogo.videoId) {
+          // Already has video
+          videosToMerge.push({
+            id: dialogo.videoId,
+            index: dialogo.index,
+            video_url: dialogo.videoUrl
+          })
+        } else {
+          // Need to generate
+          const videoResponse = await generateVideoForDialogo(dialogo)
+          videosToMerge.push({
+            id: videoResponse.id,
+            index: dialogo.index,
+            video_url: videoResponse.generatedVideo
+          })
+        }
+      }
+
+      const result = await mergeVideos(videosToMerge)
       if (result.success && result.videoUrl) {
         setMergedVideoUrl(result.videoUrl)
       } else {
@@ -230,7 +270,7 @@ function Dashboard() {
           type='button'
           onClick={handleGenerateMergedVideo}
           loading={isGeneratingMergedVideo}
-          disabled={isGeneratingMergedVideo}
+          disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.generationType)}
           fullWidth
         >
           {isGeneratingMergedVideo ? 'Generando Video...' : 'Generar Video'}

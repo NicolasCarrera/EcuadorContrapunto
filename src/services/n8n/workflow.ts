@@ -21,6 +21,7 @@ export interface HedraVideoData {
 }
 
 export interface VideoResponse {
+  id: string
   generatedVideo: string
 }
 
@@ -78,7 +79,8 @@ export const generateVideoRunway = async (data: DialogVideoData): Promise<VideoR
   // Handle if wrapped in array
   const videoData = Array.isArray(result) ? result[0] : result
   return {
-    generatedVideo: videoData.output || ''
+    id: videoData.id,
+    generatedVideo: videoData.url || ''
   }
 }
 
@@ -102,7 +104,8 @@ export const generateVideoHedra = async (data: HedraVideoData): Promise<VideoRes
   // Handle if wrapped in array
   const videoData = Array.isArray(result) ? result[0] : result
   return {
-    generatedVideo: videoData['generated video'] || ''
+    id: videoData.id,
+    generatedVideo: videoData.url || ''
   }
 }
 
