@@ -37,6 +37,10 @@ export interface MergeVideoResponse {
   error?: string
 }
 
+export interface PostVideoResponse {
+  video_url: string
+}
+
 export const generateNewsScript = async (searchQuery?: string): Promise<NewsScript> => {
   const body = searchQuery ? JSON.stringify({ search_query: searchQuery }) : undefined
   const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/generate-news-script`, {
@@ -140,5 +144,25 @@ export const mergeVideos = async (videos: MergeVideoInput[]): Promise<MergeVideo
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     }
+  }
+}
+
+export const postVideo = async (data: { title: string, summary: string, video: string }): Promise<PostVideoResponse> => {
+  const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/post-video`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to post video')
+  }
+
+  const result = await response.json()
+  const videoData = Array.isArray(result) ? result[0] : result
+  return {
+    video_url: videoData.video_url
   }
 }

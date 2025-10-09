@@ -8,7 +8,7 @@ import Button from '../components/Button'
 import Textarea from '../components/Textarea'
 import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
-import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, type Character, type VideoResponse } from '../services/n8n/workflow'
+import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, postVideo, type Character, type VideoResponse, type PostVideoResponse } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
@@ -36,6 +36,9 @@ function Dashboard() {
   const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null)
   const [isGeneratingMergedVideo, setIsGeneratingMergedVideo] = useState(false)
   const [generateMergedError, setGenerateMergedError] = useState<string | null>(null)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -197,6 +200,28 @@ function Dashboard() {
     setIsGeneratingMergedVideo(false)
   }
 
+  const handlePublish = async () => {
+    if (!mergedVideoUrl) return
+
+    setIsPublishing(true)
+    setPublishError(null)
+
+    try {
+      const base64 = mergedVideoUrl.split(',')[1]
+      const response = await postVideo({
+        title,
+        summary: resumen,
+        video: base64
+      })
+      setPublishedUrl(response.video_url)
+    } catch (error) {
+      console.error('Error publishing video:', error)
+      setPublishError('Error al publicar el video')
+    }
+
+    setIsPublishing(false)
+  }
+
 
   return (
     <main className='min-h-screen bg-gray-100 p-8'>
@@ -266,15 +291,27 @@ function Dashboard() {
       </section>
       <section className='max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md'>
         {generateMergedError && <Alert message={generateMergedError} />}
-        <Button
-          type='button'
-          onClick={handleGenerateMergedVideo}
-          loading={isGeneratingMergedVideo}
-          disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.generationType)}
-          fullWidth
-        >
-          {isGeneratingMergedVideo ? 'Generando Video...' : 'Generar Video'}
-        </Button>
+        {publishError && <Alert message={publishError} />}
+        <div className='flex gap-4'>
+          <Button
+            type='button'
+            onClick={handleGenerateMergedVideo}
+            loading={isGeneratingMergedVideo}
+            disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.generationType)}
+            className='flex-1'
+          >
+            {isGeneratingMergedVideo ? 'Generando Video...' : 'Generar Video'}
+          </Button>
+          <Button
+            type='button'
+            onClick={publishedUrl ? () => window.open(publishedUrl, '_blank') : handlePublish}
+            loading={isPublishing}
+            disabled={!mergedVideoUrl || isPublishing}
+            className='flex-1'
+          >
+            {isPublishing ? 'Publicando...' : publishedUrl ? 'Ver Video' : 'Subir Video'}
+          </Button>
+        </div>
         {mergedVideoUrl && (
           <div className='mt-4 flex justify-center'>
             <video controls>
