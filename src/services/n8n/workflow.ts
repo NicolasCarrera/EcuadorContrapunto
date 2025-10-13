@@ -1,4 +1,5 @@
-export type Character = "Narrador" | "Progresista" | "Conservador"
+export type Character = 'Narrador' | 'Progresista' | 'Conservador'
+export type Background = 'cityhall' | 'home' | 'newscast' | 'podcast' | 'street' | 'university'
 
 export interface NewsScript {
   title: string
@@ -13,11 +14,13 @@ export interface NewsScript {
 export interface DialogVideoData {
   character: Character
   video?: File
+  background: Background
 }
 
 export interface HedraVideoData {
   character: Character
   dialog: string
+  background: Background
 }
 
 export interface VideoResponse {
@@ -66,6 +69,7 @@ export const generateNewsScript = async (searchQuery?: string): Promise<NewsScri
 export const generateVideoRunway = async (data: DialogVideoData): Promise<VideoResponse> => {
   const formData = new FormData()
   formData.append('character', data.character)
+  formData.append('background', data.background)
   if (data.video) {
     formData.append('video', data.video)
   }
@@ -96,7 +100,8 @@ export const generateVideoHedra = async (data: HedraVideoData): Promise<VideoRes
     },
     body: JSON.stringify({
       character: data.character,
-      dialog: data.dialog
+      dialog: data.dialog,
+      background: data.background
     })
   })
 

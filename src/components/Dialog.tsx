@@ -11,7 +11,7 @@ import type { Dialogo } from '../pages/Dashboard'
 
 interface DialogProps {
   dialog: Dialogo
-  onUpdate: (field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => void
+  onUpdate: (field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => void
   onUpdateGenerationType: (type: 'text' | 'video' | null) => void
   onVideoChange: (e: ChangeEvent<HTMLInputElement>) => void
   onGenerate: () => Promise<void>
@@ -31,6 +31,10 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
   }
 
   const handleGenerate = async () => {
+    if (!dialog.background) {
+      setAlertMessage('Por favor selecciona un fondo')
+      return
+    }
     if (!dialog.character) {
       setAlertMessage('Por favor selecciona un personaje')
       return
@@ -60,34 +64,36 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
   return (
     <div className='w-full mb-4 border border-gray-200 rounded-lg bg-gray-50'>
       <div className='flex items-center justify-between px-3 py-2 border-b border-gray-200'>
-        <div className='inline-flex rounded-md shadow-xs' role='group'>
-          <Tooltip id={`text-tooltip-${dialog.index}`} content='Generar video a partir de texto'>
-            <button
-              type='button'
-              onClick={handleSelectText}
-              className={`px-4 py-2 text-sm font-medium rounded-s-lg cursor-pointer flex items-center ${
-                dialog.generationType === 'text'
-                  ? 'text-blue-700 bg-gray-100 border border-blue-700'
-                  : 'text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700'
-              }`}
-            >
-              <LetterCaseIcon />
-            </button>
-          </Tooltip>
-          <Tooltip id={`video-tooltip-${dialog.index}`} content='Generar video a partir de un video'>
-            <button
-              type='button'
-              onClick={handleSelectVideo}
-              className={`px-4 py-2 text-sm font-medium rounded-e-lg cursor-pointer flex items-center ${
-                dialog.generationType === 'video'
-                  ? 'text-blue-700 bg-gray-100 border border-blue-700'
-                  : 'text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700'
-              }`}
-            >
-              <FileUploadIcon />
-              {dialog.video && <CheckIcon className='ml-1 w-4 h-4 text-green-500' />}
-            </button>
-          </Tooltip>
+        <div className='flex items-center space-x-2'>
+          <div className='inline-flex rounded-md shadow-xs' role='group'>
+            <Tooltip id={`text-tooltip-${dialog.index}`} content='Generar video a partir de texto'>
+              <button
+                type='button'
+                onClick={handleSelectText}
+                className={`px-4 py-2 text-sm font-medium rounded-s-lg cursor-pointer flex items-center ${
+                  dialog.generationType === 'text'
+                    ? 'text-blue-700 bg-gray-100 border border-blue-700'
+                    : 'text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700'
+                }`}
+              >
+                <LetterCaseIcon />
+              </button>
+            </Tooltip>
+            <Tooltip id={`video-tooltip-${dialog.index}`} content='Generar video a partir de un video'>
+              <button
+                type='button'
+                onClick={handleSelectVideo}
+                className={`px-4 py-2 text-sm font-medium rounded-e-lg cursor-pointer flex items-center ${
+                  dialog.generationType === 'video'
+                    ? 'text-blue-700 bg-gray-100 border border-blue-700'
+                    : 'text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700'
+                }`}
+              >
+                <FileUploadIcon />
+                {dialog.video && <CheckIcon className='ml-1 w-4 h-4 text-green-500' />}
+              </button>
+            </Tooltip>
+          </div>
         </div>
         <div className='flex items-center space-x-1'>
           <Tooltip id={`generate-tooltip-${dialog.index}`} content='Generar Video'>
@@ -99,14 +105,14 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
                   ? 'text-gray-500'
                   : 'text-gray-900'
               }`}
-              disabled={dialog.processing || !dialog.character || !dialog.generationType || (dialog.generationType === 'video' && !dialog.video) || (dialog.generationType === 'text' && !dialog.dialog)}
+              disabled={dialog.processing || !dialog.background || !dialog.character || !dialog.generationType || (dialog.generationType === 'video' && !dialog.video) || (dialog.generationType === 'text' && !dialog.dialog)}
             >
               {dialog.processing ? <SpinnerIcon /> : <SparklesIcon />}
               <span className='sr-only'>Generar video</span>
             </button>
           </Tooltip>
           <Tooltip id={`download-tooltip-${dialog.index}`} content='Descargar Video'>
-            <button type='button' onClick={handleDownload} className={`p-2 rounded-sm cursor-pointer ${!dialog.videoUrl ? 'text-gray-500' : 'text-gray-900'}`} disabled={!dialog.videoUrl}>
+            <button type='button' onClick={handleDownload} className={`p-2 rounded-sm cursor-pointer ${!dialog.videoUrl ? 'text-gray-500' : 'text-blue-600'}`} disabled={!dialog.videoUrl}>
               <DownloadIcon />
               <span className='sr-only'>Descargar video</span>
             </button>
@@ -114,19 +120,37 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
         </div>
       </div>
       <div className='px-4 py-2 bg-white rounded-b-lg'>
-        <Select
-          label='Personaje'
-          id={`character-${dialog.index}`}
-          value={dialog.character}
-          onChange={(e) => onUpdate('character', e.target.value)}
-          options={[
-            { value: '', label: 'Selecciona un personaje' },
-            { value: 'Narrador', label: 'Narrador' },
-            { value: 'Progresista', label: 'Progresista' },
-            { value: 'Conservador', label: 'Conservador' },
-          ]}
-          required
-        />
+        <div className='flex gap-4'>
+          <Select
+            label='Personaje'
+            id={`character-${dialog.index}`}
+            value={dialog.character}
+            onChange={(e) => onUpdate('character', e.target.value)}
+            options={[
+              { value: '', label: 'Selecciona un personaje' },
+              { value: 'Narrador', label: 'Narrador' },
+              { value: 'Progresista', label: 'Progresista' },
+              { value: 'Conservador', label: 'Conservador' },
+            ]}
+            required
+          />
+          <Select
+            label='Escenario'
+            id={`background-${dialog.index}`}
+            value={dialog.background}
+            onChange={(e) => onUpdate('background', e.target.value)}
+            options={[
+              { value: '', label: 'Selecciona un fondo' },
+              { value: 'cityhall', label: 'Ayuntamiento' },
+              { value: 'home', label: 'Casa' },
+              { value: 'newscast', label: 'Noticiero' },
+              { value: 'podcast', label: 'Podcast' },
+              { value: 'street', label: 'Calle' },
+              { value: 'university', label: 'Universidad' }
+            ]}
+            required
+          />
+        </div>
         <div className='mt-4'>
           <Textarea
             label='Diálogo'

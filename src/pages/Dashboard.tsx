@@ -6,9 +6,10 @@ import type { ChangeEvent } from 'react'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import Textarea from '../components/Textarea'
+import Select from '../components/Select'
 import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
-import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, postVideo, type Character, type VideoResponse } from '../services/n8n/workflow'
+import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, postVideo, type Character, type Background, type VideoResponse } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
@@ -24,6 +25,7 @@ export interface Dialogo {
   processing?: boolean
   error?: string
   generationType: 'text' | 'video' | null
+  background: Background | ''
 }
 
 function Dashboard() {
@@ -39,6 +41,8 @@ function Dashboard() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
+  const [globalGenerationType, setGlobalGenerationType] = useState<'text' | 'video' | null>(null)
+  const [globalBackground, setGlobalBackground] = useState<Background | ''>('')
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -50,15 +54,19 @@ function Dashboard() {
   }, [navigate])
 
   const addDialogo = () => {
-    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: null, videoId: undefined }])
+    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: globalGenerationType, videoId: undefined, background: globalBackground }])
   }
 
-  const updateDialogo = (index: number, field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => {
+  const updateDialogo = (index: number, field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => {
     setDialogos(dialogos.map(d => d.index === index ? { ...d, [field]: value } : d))
   }
 
   const updateGenerationType = (index: number, type: 'text' | 'video' | null) => {
     setDialogos(dialogos.map(d => d.index === index ? { ...d, generationType: type } : d))
+  }
+
+  const applyGlobalSettings = () => {
+    setDialogos(dialogos.map(d => ({ ...d, generationType: globalGenerationType, background: globalBackground })))
   }
 
   const handleVideoChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +80,9 @@ function Dashboard() {
   }
 
   const generateVideoForDialogo = async (dialogo: Dialogo): Promise<VideoResponse> => {
+    if (!dialogo.background) {
+      throw new Error('Fondo requerido para generación de video')
+    }
     if (!dialogo.character || !dialogo.generationType) {
       throw new Error('Dialogo no válido')
     }
@@ -89,13 +100,15 @@ function Dashboard() {
       if (dialogo.generationType === 'video') {
         const videoData: DialogVideoData = {
           character: dialogo.character,
-          video: dialogo.video!
+          video: dialogo.video!,
+          background: dialogo.background as Background
         }
         videoResponse = await generateVideoRunway(videoData)
       } else {
         const hedraData = {
           character: dialogo.character,
-          dialog: dialogo.dialog
+          dialog: dialogo.dialog,
+          background: dialogo.background as Background
         }
         videoResponse = await generateVideoHedra(hedraData)
       }
@@ -147,7 +160,8 @@ function Dashboard() {
         videoId: undefined,
         processing: false,
         error: undefined,
-        generationType: null
+        generationType: globalGenerationType,
+        background: globalBackground
       })))
     } catch (error) {
       console.error('Error generating news script:', error)
@@ -157,7 +171,7 @@ function Dashboard() {
   }
 
   const handleGenerateMergedVideo = async () => {
-    if (dialogos.length <= 1 || dialogos.some(d => !d.generationType)) {
+    if (dialogos.length <= 1 || dialogos.some(d => !d.generationType || !d.background)) {
       return
     }
 
@@ -274,11 +288,52 @@ function Dashboard() {
           <label className='block text-gray-700 text-sm font-bold mb-2'>
             Dialogos
           </label>
+
+          <div className={`mb-4 border border-gray-200 rounded-lg ${dialogos.length <= 1 ? 'bg-gray-100 opacity-50' : 'bg-gray-50'}`}>
+            <div className='px-3 py-2 border-b border-gray-200'>
+              <div className='flex gap-4 items-end'>
+                <Select
+                  label='Tipo de Generación'
+                  id='global-generation-type'
+                  value={globalGenerationType || ''}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setGlobalGenerationType(e.target.value as 'text' | 'video' | null)}
+                  options={[
+                    { value: '', label: 'Selecciona tipo' },
+                    { value: 'text', label: 'Texto' },
+                    { value: 'video', label: 'Video' }
+                  ]}
+                  disabled={dialogos.length <= 1}
+                />
+                <Select
+                  label='Escenario'
+                  id='global-background'
+                  value={globalBackground}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setGlobalBackground(e.target.value as Background | '')}
+                  options={[
+                    { value: '', label: 'Selecciona escenario' },
+                    { value: 'cityhall', label: 'Ayuntamiento' },
+                    { value: 'home', label: 'Casa' },
+                    { value: 'newscast', label: 'Noticiero' },
+                    { value: 'podcast', label: 'Podcast' },
+                    { value: 'street', label: 'Calle' },
+                    { value: 'university', label: 'Universidad' }
+                  ]}
+                  disabled={dialogos.length <= 1}
+                />
+                <div className='ml-auto'>
+                  <Button type='button' onClick={applyGlobalSettings} disabled={dialogos.length <= 1}>
+                    Aplicar a Todos
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {dialogos.map((dialogo) => (
             <Dialog
               key={dialogo.index}
               dialog={dialogo}
-              onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog'>, value: string) => updateDialogo(dialogo.index, field, value)}
+              onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => updateDialogo(dialogo.index, field, value)}
               onUpdateGenerationType={(type: 'text' | 'video' | null) => updateGenerationType(dialogo.index, type)}
               onVideoChange={(e: ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
               onGenerate={() => handleGenerateVideo(dialogo.index)}
@@ -297,7 +352,7 @@ function Dashboard() {
             type='button'
             onClick={handleGenerateMergedVideo}
             loading={isGeneratingMergedVideo}
-            disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.generationType)}
+            disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.generationType || !d.background)}
             className='flex-1'
           >
             {isGeneratingMergedVideo ? 'Generando Video...' : 'Generar Video'}
