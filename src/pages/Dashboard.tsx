@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ChangeEvent } from 'react'
@@ -11,11 +9,14 @@ import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
 import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, postVideo, type Character, type Background, type VideoResponse } from '../services/n8n/workflow'
 import type { DialogVideoData } from '../services/n8n/workflow'
-import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
+import { SparklesIcon, AddIcon, LogoutIcon, TrashIcon } from '../components/icons'
+import OptionPanel from '../components/OptionPanel'
+import Modal from '../components/Modal'
 import { useAuth } from '../hooks/useAuth'
 import { getStoredAuth } from '../services/pocketbase/auth'
 
 export interface Dialogo {
+  id: string
   index: number
   character: Character
   dialog: string
@@ -43,6 +44,8 @@ function Dashboard() {
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
   const [globalGenerationType, setGlobalGenerationType] = useState<'text' | 'video' | null>(null)
   const [globalBackground, setGlobalBackground] = useState<Background | ''>('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [dialogToDelete, setDialogToDelete] = useState<string | null>(null)
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -54,7 +57,7 @@ function Dashboard() {
   }, [navigate])
 
   const addDialogo = () => {
-    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: globalGenerationType, videoId: undefined, background: globalBackground }])
+    setDialogos([...dialogos, { id: crypto.randomUUID(), index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: globalGenerationType, videoId: undefined, background: globalBackground }])
   }
 
   const updateDialogo = (index: number, field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => {
@@ -154,6 +157,7 @@ function Dashboard() {
       setResumen(response.summary || '')
       const dialogs = response.dialogs || []
       setDialogos(dialogs.map((d: { index: number, character: Character, dialog: string }) => ({
+        id: crypto.randomUUID(),
         ...d,
         video: null,
         videoUrl: undefined,
@@ -234,6 +238,29 @@ function Dashboard() {
     }
 
     setIsPublishing(false)
+  }
+
+  const handleDeleteDialog = (dialogId: string) => {
+    setDialogToDelete(dialogId)
+    setDeleteModalOpen(true)
+  }
+
+  const confirmDeleteDialog = () => {
+    if (dialogToDelete) {
+      const filteredDialogos = dialogos.filter(d => d.id !== dialogToDelete)
+      const reindexedDialogos = filteredDialogos.map((d, idx) => ({
+        ...d,
+        index: idx + 1
+      }))
+      setDialogos(reindexedDialogos)
+      setDeleteModalOpen(false)
+      setDialogToDelete(null)
+    }
+  }
+
+  const cancelDeleteDialog = () => {
+    setDeleteModalOpen(false)
+    setDialogToDelete(null)
   }
 
 
@@ -329,15 +356,28 @@ function Dashboard() {
             </div>
           </div>
           
-          {dialogos.map((dialogo) => (
-            <Dialog
-              key={dialogo.index}
-              dialog={dialogo}
-              onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => updateDialogo(dialogo.index, field, value)}
-              onUpdateGenerationType={(type: 'text' | 'video' | null) => updateGenerationType(dialogo.index, type)}
-              onVideoChange={(e: ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
-              onGenerate={() => handleGenerateVideo(dialogo.index)}
-            />
+          {dialogos.map((dialogo, arrayIndex) => (
+            <OptionPanel
+              key={`option-panel-${arrayIndex}`}
+              id={`option-panel-${arrayIndex}`}
+              actions={[
+                <button
+                  key="delete"
+                  onClick={() => handleDeleteDialog(dialogo.id)}
+                  className="p-2 bg-red-500 text-white rounded-lg"
+                >
+                  <TrashIcon />
+                </button>
+              ]}
+            >
+              <Dialog
+                dialog={dialogo}
+                onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => updateDialogo(dialogo.index, field, value)}
+                onUpdateGenerationType={(type: 'text' | 'video' | null) => updateGenerationType(dialogo.index, type)}
+                onVideoChange={(e: ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
+                onGenerate={() => handleGenerateVideo(dialogo.index)}
+              />
+            </OptionPanel>
           ))}
           <Button type='button' onClick={addDialogo} icon={<AddIcon />}>
             Add Dialogo
@@ -376,6 +416,15 @@ function Dashboard() {
           </div>
         )}
       </section>
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={cancelDeleteDialog}
+        onConfirm={confirmDeleteDialog}
+        title="Confirmar eliminación"
+        message="¿Estás seguro de que quieres eliminar este diálogo? Esta acción no se puede deshacer."
+        confirmText="Sí, eliminar"
+        cancelText="Cancelar"
+      />
     </main>
   )
 }

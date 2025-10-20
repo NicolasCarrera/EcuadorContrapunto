@@ -51,7 +51,7 @@ function Tooltip({ id, content, children }: TooltipProps) {
       >
         {children}
       </div>
-      {createPortal(tooltipElement, document.getElementById('tooltip-portal')!)}
+      {createPortal(tooltipElement, document.getElementById('tooltip')!)}
     </>
   )
 }

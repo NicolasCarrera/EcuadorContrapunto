@@ -1,11 +1,10 @@
-'use client'
-
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import Alert from '../components/Alert'
 import { useAuth } from '../hooks/useAuth'
+import OptionPanel from '../components/OptionPanel'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -58,6 +57,9 @@ function Login() {
               <Button type='submit' fullWidth loading={loading}>
                 Iniciar sesión
               </Button>
+              <OptionPanel id='1' actions={[<p>op1</p>, <p>op1</p>]}>
+                <p>Hola</p>
+              </OptionPanel>
             </form>
           </div>
         </div>
