@@ -221,19 +221,33 @@ function Dashboard() {
     setPublishError(null)
 
     try {
-      const base64 = mergedVideoUrl.split(',')[1]
+      // Validate URL before publishing
+      if (!isValidVideoUrl(mergedVideoUrl)) {
+        throw new Error('URL de video inválida')
+      }
+
       const response = await postVideo({
         title,
         summary: resumen,
-        video: base64
+        video: mergedVideoUrl
       })
       setPublishedUrl(response.video_url)
     } catch (error) {
       console.error('Error publishing video:', error)
-      setPublishError('Error al publicar el video')
+      setPublishError(error instanceof Error ? error.message : 'Error al publicar el video')
     }
 
     setIsPublishing(false)
+  }
+
+  // Helper function to validate video URLs
+  const isValidVideoUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url)
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+    } catch {
+      return false
+    }
   }
 
 
@@ -367,9 +381,17 @@ function Dashboard() {
             {isPublishing ? 'Publicando...' : publishedUrl ? 'Ver Video' : 'Subir Video'}
           </Button>
         </div>
-        {mergedVideoUrl && (
+        {mergedVideoUrl && isValidVideoUrl(mergedVideoUrl) && (
           <div className='mt-4 flex justify-center'>
-            <video controls>
+            <video
+              controls
+              preload="metadata"
+              className='max-w-full rounded-lg shadow-md'
+              onError={(e) => {
+                console.error('Error loading video:', e)
+                setGenerateMergedError('Error al cargar el video')
+              }}
+            >
               <source src={mergedVideoUrl} type='video/mp4' />
               Tu navegador no soporta el elemento de video.
             </video>

@@ -120,6 +120,13 @@ export const generateVideoHedra = async (data: HedraVideoData): Promise<VideoRes
 
 export const mergeVideos = async (videos: MergeVideoInput[]): Promise<MergeVideoResponse> => {
   try {
+    // Validate URLs before sending to merge
+    for (const video of videos) {
+      if (!video.video_url || !isValidVideoUrl(video.video_url)) {
+        throw new Error(`Invalid video URL: ${video.video_url}`)
+      }
+    }
+
     const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/merge-video`, {
       method: 'POST',
       headers: {
@@ -133,12 +140,21 @@ export const mergeVideos = async (videos: MergeVideoInput[]): Promise<MergeVideo
     }
 
     const result = await response.json()
-    const base64Data = result.data
-    if (!base64Data) {
-      throw new Error('No video data received')
+    console.log('Merge API response:', result)
+
+    const mergeData = Array.isArray(result) ? result[0] : result
+
+    if (mergeData.success === false) {
+      throw new Error(mergeData.error || 'Merge failed on server')
     }
 
-    const videoUrl = `data:video/mp4;base64,${base64Data}`
+    const videoUrl = mergeData.data || mergeData.video_url || mergeData.url || mergeData.videoUrl
+    console.log('Extracted videoUrl:', videoUrl)
+    if (!videoUrl || !isValidVideoUrl(videoUrl)) {
+      console.error('Invalid videoUrl received:', videoUrl)
+      throw new Error('No valid video URL received')
+    }
+
     return {
       success: true,
       videoUrl
@@ -152,7 +168,19 @@ export const mergeVideos = async (videos: MergeVideoInput[]): Promise<MergeVideo
   }
 }
 
+// Helper function to validate video URLs
+const isValidVideoUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url)
+    // Check if it's a valid URL and likely a video URL
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export const postVideo = async (data: { title: string, summary: string, video: string }): Promise<PostVideoResponse> => {
+  console.log('Posting video with data:', data)
   const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/post-video`, {
     method: 'POST',
     headers: {
@@ -166,6 +194,7 @@ export const postVideo = async (data: { title: string, summary: string, video: s
   }
 
   const result = await response.json()
+  console.log('Post video API response:', result)
   const videoData = Array.isArray(result) ? result[0] : result
   return {
     video_url: videoData.video_url
