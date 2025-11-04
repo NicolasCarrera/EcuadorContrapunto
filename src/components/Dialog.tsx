@@ -1,34 +1,19 @@
-'use client'
-
-import { useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import { useState } from 'react'
 import Select from './Select'
 import Textarea from './Textarea'
 import Tooltip from './Tooltip'
 import Alert from './Alert'
-import { FileUploadIcon, SparklesIcon, DownloadIcon, CheckIcon, SpinnerIcon, LetterCaseIcon } from './icons'
+import { SparklesIcon, DownloadIcon, SpinnerIcon, LetterCaseIcon } from './icons'
 import type { Dialogo } from '../pages/Dashboard'
 
 interface DialogProps {
   dialog: Dialogo
   onUpdate: (field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => void
-  onUpdateGenerationType: (type: 'text' | 'video' | null) => void
-  onVideoChange: (e: ChangeEvent<HTMLInputElement>) => void
   onGenerate: () => Promise<void>
 }
 
-function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGenerate }: DialogProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+function Dialog({ dialog, onUpdate, onGenerate }: DialogProps) {
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
-
-  const handleSelectText = () => {
-    onUpdateGenerationType('text')
-  }
-
-  const handleSelectVideo = () => {
-    onUpdateGenerationType('video')
-    fileInputRef.current?.click()
-  }
 
   const handleGenerate = async () => {
     if (!dialog.background) {
@@ -39,15 +24,7 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
       setAlertMessage('Por favor selecciona un personaje')
       return
     }
-    if (!dialog.generationType) {
-      setAlertMessage('Por favor selecciona un tipo de generación')
-      return
-    }
-    if (dialog.generationType === 'video' && !dialog.video) {
-      setAlertMessage('Por favor sube un video')
-      return
-    }
-    if (dialog.generationType === 'text' && !dialog.dialog) {
+    if (!dialog.dialog) {
       setAlertMessage('Por favor escribe un diálogo')
       return
     }
@@ -69,28 +46,9 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
             <Tooltip id={`text-tooltip-${dialog.index}`} content='Generar video a partir de texto'>
               <button
                 type='button'
-                onClick={handleSelectText}
-                className={`px-4 py-2 text-sm font-medium rounded-s-lg cursor-pointer flex items-center ${
-                  dialog.generationType === 'text'
-                    ? 'text-blue-700 bg-gray-100 border border-blue-700'
-                    : 'text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700'
-                }`}
+                className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer flex items-center text-blue-700 bg-gray-100 border border-blue-700`}
               >
                 <LetterCaseIcon />
-              </button>
-            </Tooltip>
-            <Tooltip id={`video-tooltip-${dialog.index}`} content='Generar video a partir de un video'>
-              <button
-                type='button'
-                onClick={handleSelectVideo}
-                className={`px-4 py-2 text-sm font-medium rounded-e-lg cursor-pointer flex items-center ${
-                  dialog.generationType === 'video'
-                    ? 'text-blue-700 bg-gray-100 border border-blue-700'
-                    : 'text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700'
-                }`}
-              >
-                <FileUploadIcon />
-                {dialog.video && <CheckIcon className='ml-1 w-4 h-4 text-green-500' />}
               </button>
             </Tooltip>
           </div>
@@ -101,11 +59,11 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
               type='button'
               onClick={handleGenerate}
               className={`p-2 rounded-sm cursor-pointer ${
-                dialog.processing || !dialog.character || !dialog.generationType || (dialog.generationType === 'video' && !dialog.video) || (dialog.generationType === 'text' && !dialog.dialog)
+                dialog.processing || !dialog.character || !dialog.dialog
                   ? 'text-gray-500'
                   : 'text-gray-900'
               }`}
-              disabled={dialog.processing || !dialog.background || !dialog.character || !dialog.generationType || (dialog.generationType === 'video' && !dialog.video) || (dialog.generationType === 'text' && !dialog.dialog)}
+              disabled={dialog.processing || !dialog.background || !dialog.character || !dialog.dialog}
             >
               {dialog.processing ? <SpinnerIcon /> : <SparklesIcon />}
               <span className='sr-only'>Generar video</span>
@@ -163,13 +121,6 @@ function Dialog({ dialog, onUpdate, onUpdateGenerationType, onVideoChange, onGen
         {alertMessage && <Alert message={alertMessage} />}
         {dialog.error && <Alert message={dialog.error} />}
       </div>
-      <input
-        ref={fileInputRef}
-        type='file'
-        accept='video/mp4'
-        onChange={onVideoChange}
-        style={{ display: 'none' }}
-      />
     </div>
   )
 }

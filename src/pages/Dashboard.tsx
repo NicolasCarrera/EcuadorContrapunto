@@ -1,16 +1,11 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { ChangeEvent } from 'react'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import Textarea from '../components/Textarea'
-import Select from '../components/Select'
 import Dialog from '../components/Dialog'
 import Alert from '../components/Alert'
-import { generateNewsScript, generateVideoRunway, generateVideoHedra, mergeVideos, postVideo, type Character, type Background, type VideoResponse } from '../services/n8n/workflow'
-import type { DialogVideoData } from '../services/n8n/workflow'
+import { generateNewsScript, generateVideoHedra, mergeVideos, postVideo, type Character, type Background, type VideoResponse } from '../services/n8n/workflow'
 import { SparklesIcon, AddIcon, LogoutIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
 import { getStoredAuth } from '../services/pocketbase/auth'
@@ -19,12 +14,11 @@ export interface Dialogo {
   index: number
   character: Character
   dialog: string
-  video: File | null
+  videoFile?: File | null
   videoUrl?: string
   videoId?: string
   processing?: boolean
   error?: string
-  generationType: 'text' | 'video' | null
   background: Background | ''
 }
 
@@ -41,8 +35,6 @@ function Dashboard() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
-  const [globalGenerationType, setGlobalGenerationType] = useState<'text' | 'video' | null>(null)
-  const [globalBackground, setGlobalBackground] = useState<Background | ''>('')
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -54,64 +46,33 @@ function Dashboard() {
   }, [navigate])
 
   const addDialogo = () => {
-    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', video: null, generationType: globalGenerationType, videoId: undefined, background: globalBackground }])
+    setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', videoFile: null, videoId: undefined, background: '' }])
   }
 
   const updateDialogo = (index: number, field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => {
     setDialogos(dialogos.map(d => d.index === index ? { ...d, [field]: value } : d))
   }
 
-  const updateGenerationType = (index: number, type: 'text' | 'video' | null) => {
-    setDialogos(dialogos.map(d => d.index === index ? { ...d, generationType: type } : d))
-  }
-
-  const applyGlobalSettings = () => {
-    setDialogos(dialogos.map(d => ({ ...d, generationType: globalGenerationType, background: globalBackground })))
-  }
-
-  const handleVideoChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file && file.type === 'video/mp4') {
-      setDialogos(dialogos.map(d => d.index === index ? { ...d, video: file, videoUrl: undefined, processing: false, error: undefined } : d))
-      setAlertMessage(null)
-    } else {
-      setAlertMessage('Por favor selecciona un archivo de video MP4 válido')
-    }
-  }
-
   const generateVideoForDialogo = async (dialogo: Dialogo): Promise<VideoResponse> => {
     if (!dialogo.background) {
       throw new Error('Fondo requerido para generación de video')
     }
-    if (!dialogo.character || !dialogo.generationType) {
-      throw new Error('Dialogo no válido')
+    if (!dialogo.character) {
+      throw new Error('Personaje requerido para generación de video')
     }
-    if (dialogo.generationType === 'video' && !dialogo.video) {
-      throw new Error('Video requerido para generación de video')
-    }
-    if (dialogo.generationType === 'text' && !dialogo.dialog) {
+    if (!dialogo.dialog) {
       throw new Error('Diálogo requerido para generación de texto')
     }
 
     setDialogos(prev => prev.map(d => d.index === dialogo.index ? { ...d, processing: true, error: undefined } : d))
 
     try {
-      let videoResponse: VideoResponse
-      if (dialogo.generationType === 'video') {
-        const videoData: DialogVideoData = {
-          character: dialogo.character,
-          video: dialogo.video!,
-          background: dialogo.background as Background
-        }
-        videoResponse = await generateVideoRunway(videoData)
-      } else {
-        const hedraData = {
-          character: dialogo.character,
-          dialog: dialogo.dialog,
-          background: dialogo.background as Background
-        }
-        videoResponse = await generateVideoHedra(hedraData)
+      const hedraData = {
+        character: dialogo.character,
+        dialog: dialogo.dialog,
+        background: dialogo.background as Background
       }
+      const videoResponse = await generateVideoHedra(hedraData)
 
       setDialogos(prev => prev.map(d => d.index === dialogo.index ? {
         ...d,
@@ -155,13 +116,12 @@ function Dashboard() {
       const dialogs = response.dialogs || []
       setDialogos(dialogs.map((d: { index: number, character: Character, dialog: string }) => ({
         ...d,
-        video: null,
+        videoFile: null,
         videoUrl: undefined,
         videoId: undefined,
         processing: false,
         error: undefined,
-        generationType: globalGenerationType,
-        background: globalBackground
+        background: ''
       })))
     } catch (error) {
       console.error('Error generating news script:', error)
@@ -171,7 +131,7 @@ function Dashboard() {
   }
 
   const handleGenerateMergedVideo = async () => {
-    if (dialogos.length <= 1 || dialogos.some(d => !d.generationType || !d.background)) {
+    if (dialogos.length <= 1 || dialogos.some(d => !d.background)) {
       return
     }
 
@@ -303,53 +263,12 @@ function Dashboard() {
             Dialogos
           </label>
 
-          <div className={`mb-4 border border-gray-200 rounded-lg ${dialogos.length <= 1 ? 'bg-gray-100 opacity-50' : 'bg-gray-50'}`}>
-            <div className='px-3 py-2 border-b border-gray-200'>
-              <div className='flex gap-4 items-end'>
-                <Select
-                  label='Tipo de Generación'
-                  id='global-generation-type'
-                  value={globalGenerationType || ''}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setGlobalGenerationType(e.target.value as 'text' | 'video' | null)}
-                  options={[
-                    { value: '', label: 'Selecciona tipo' },
-                    { value: 'text', label: 'Texto' },
-                    { value: 'video', label: 'Video' }
-                  ]}
-                  disabled={dialogos.length <= 1}
-                />
-                <Select
-                  label='Escenario'
-                  id='global-background'
-                  value={globalBackground}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setGlobalBackground(e.target.value as Background | '')}
-                  options={[
-                    { value: '', label: 'Selecciona escenario' },
-                    { value: 'cityhall', label: 'Ayuntamiento' },
-                    { value: 'home', label: 'Casa' },
-                    { value: 'newscast', label: 'Noticiero' },
-                    { value: 'podcast', label: 'Podcast' },
-                    { value: 'street', label: 'Calle' },
-                    { value: 'university', label: 'Universidad' }
-                  ]}
-                  disabled={dialogos.length <= 1}
-                />
-                <div className='ml-auto'>
-                  <Button type='button' onClick={applyGlobalSettings} disabled={dialogos.length <= 1}>
-                    Aplicar a Todos
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
           
           {dialogos.map((dialogo) => (
             <Dialog
               key={dialogo.index}
               dialog={dialogo}
               onUpdate={(field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => updateDialogo(dialogo.index, field, value)}
-              onUpdateGenerationType={(type: 'text' | 'video' | null) => updateGenerationType(dialogo.index, type)}
-              onVideoChange={(e: ChangeEvent<HTMLInputElement>) => handleVideoChange(dialogo.index, e)}
               onGenerate={() => handleGenerateVideo(dialogo.index)}
             />
           ))}
@@ -366,7 +285,7 @@ function Dashboard() {
             type='button'
             onClick={handleGenerateMergedVideo}
             loading={isGeneratingMergedVideo}
-            disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.generationType || !d.background)}
+            disabled={isGeneratingMergedVideo || dialogos.length <= 1 || dialogos.some(d => !d.background)}
             className='flex-1'
           >
             {isGeneratingMergedVideo ? 'Generando Video...' : 'Generar Video'}
