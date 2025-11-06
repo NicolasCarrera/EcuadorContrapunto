@@ -1,16 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import Alert from '../components/Alert'
 import { useAuth } from '../hooks/useAuth'
+import { getStoredAuth } from '../services/pocketbase/auth'
 
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const { authenticate, loading, error } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const { token } = getStoredAuth()
+    if (token) {
+      navigate('/dashboard')
+    }
+  }, [])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()

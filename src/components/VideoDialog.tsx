@@ -1,31 +1,33 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import Select from './Select'
-import Textarea from './Textarea'
 import Tooltip from './Tooltip'
 import Alert from './Alert'
-import { SparklesIcon, DownloadIcon, SpinnerIcon, LetterCaseIcon } from './icons'
-import type { Dialogo } from '../pages/TextToVideoPage'
+import { FileUploadIcon, SparklesIcon, DownloadIcon, CheckIcon, SpinnerIcon } from './icons'
+import type { VideoItem } from '../pages/VideoToVideoPage'
 
-interface DialogProps {
-  dialog: Dialogo
-  onUpdate: (field: keyof Pick<Dialogo, 'character' | 'dialog' | 'background'>, value: string) => void
+interface VideoDialogProps {
+  dialog: VideoItem
+  onUpdate: (field: keyof Pick<VideoItem, 'character'>, value: string) => void
+  onVideoChange: (e: ChangeEvent<HTMLInputElement>) => void
   onGenerate: () => Promise<void>
 }
 
-function Dialog({ dialog, onUpdate, onGenerate }: DialogProps) {
+function VideoDialog({ dialog, onUpdate, onVideoChange, onGenerate }: VideoDialogProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
+  const handleSelectVideo = () => {
+    fileInputRef.current?.click()
+  }
+
   const handleGenerate = async () => {
-    if (!dialog.background) {
-      setAlertMessage('Por favor selecciona un fondo')
-      return
-    }
     if (!dialog.character) {
       setAlertMessage('Por favor selecciona un personaje')
       return
     }
-    if (!dialog.dialog) {
-      setAlertMessage('Por favor escribe un diálogo')
+    if (!dialog.videoFile) {
+      setAlertMessage('Por favor sube un video')
       return
     }
     setAlertMessage(null)
@@ -43,12 +45,20 @@ function Dialog({ dialog, onUpdate, onGenerate }: DialogProps) {
       <div className='flex items-center justify-between px-3 py-2 border-b border-gray-200'>
         <div className='flex items-center space-x-2'>
           <div className='inline-flex rounded-md shadow-xs' role='group'>
-            <button
-              type='button'
-              className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center text-gray-900 bg-gray-200 border border-gray-300`}
-            >
-              <LetterCaseIcon />
-            </button>
+            <Tooltip id={`video-tooltip-${dialog.index}`} content='Subir video'>
+              <button
+                type='button'
+                onClick={handleSelectVideo}
+                className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer flex items-center ${
+                  dialog.videoFile
+                    ? 'text-white bg-blue-600 border border-blue-600 hover:bg-blue-700'
+                    : 'text-gray-900 bg-gray-200 border border-gray-300 hover:bg-gray-300'
+                }`}
+              >
+                <FileUploadIcon />
+                {dialog.videoFile && <CheckIcon className='ml-1 w-4 h-4 text-white' />}
+              </button>
+            </Tooltip>
           </div>
         </div>
         <div className='flex items-center space-x-1'>
@@ -56,11 +66,12 @@ function Dialog({ dialog, onUpdate, onGenerate }: DialogProps) {
             <button
               type='button'
               onClick={handleGenerate}
-              className={`p-2 rounded-sm cursor-pointer ${dialog.processing || !dialog.character || !dialog.dialog
+              className={`p-2 rounded-sm cursor-pointer ${
+                dialog.processing || !dialog.character || !dialog.videoFile
                   ? 'text-gray-500'
                   : 'text-gray-900'
-                }`}
-              disabled={dialog.processing || !dialog.background || !dialog.character || !dialog.dialog}
+              }`}
+              disabled={dialog.processing || !dialog.character || !dialog.videoFile}
             >
               {dialog.processing ? <SpinnerIcon /> : <SparklesIcon />}
               <span className='sr-only'>Generar video</span>
@@ -83,43 +94,25 @@ function Dialog({ dialog, onUpdate, onGenerate }: DialogProps) {
             onChange={(e) => onUpdate('character', e.target.value)}
             options={[
               { value: '', label: 'Selecciona un personaje' },
-              { value: 'Narrador', label: 'Narrador' },
-              { value: 'Progresista', label: 'Progresista' },
-              { value: 'Conservador', label: 'Conservador' },
+              { value: 'formal', label: 'Personaje formal' },
+              { value: 'smart_casual', label: 'Personaje semi formal' },
+              { value: 'casual', label: 'Personaje casual' },
             ]}
             required
-          />
-          <Select
-            label='Escenario'
-            id={`background-${dialog.index}`}
-            value={dialog.background}
-            onChange={(e) => onUpdate('background', e.target.value)}
-            options={[
-              { value: '', label: 'Selecciona un fondo' },
-              { value: 'cityhall', label: 'Ayuntamiento' },
-              { value: 'home', label: 'Casa' },
-              { value: 'newscast', label: 'Noticiero' },
-              { value: 'podcast', label: 'Podcast' },
-              { value: 'street', label: 'Calle' },
-              { value: 'university', label: 'Universidad' }
-            ]}
-            required
-          />
-        </div>
-        <div className='mt-4'>
-          <Textarea
-            label='Diálogo'
-            placeholder='Dialog'
-            value={dialog.dialog}
-            onChange={(e) => onUpdate('dialog', e.target.value)}
-            rows={4}
           />
         </div>
         {alertMessage && <Alert message={alertMessage} />}
         {dialog.error && <Alert message={dialog.error} />}
       </div>
+      <input
+        ref={fileInputRef}
+        type='file'
+        accept='video/mp4'
+        onChange={onVideoChange}
+        style={{ display: 'none' }}
+      />
     </div>
   )
 }
 
-export default Dialog
+export default VideoDialog
