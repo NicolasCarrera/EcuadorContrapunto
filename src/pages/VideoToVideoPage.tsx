@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import type { ChangeEvent } from 'react'
 import Button from '../components/Button'
 import VideoDialog from '../components/VideoDialog'
@@ -21,13 +20,10 @@ export interface VideoItem {
 
 function VideoToVideoPage() {
   const [videoItems, setVideoItems] = useState<VideoItem[]>([])
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [, setAlertMessage] = useState<string | null>(null)
   const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null)
   const [isGeneratingMergedVideo, setIsGeneratingMergedVideo] = useState(false)
   const [generateMergedError, setGenerateMergedError] = useState<string | null>(null)
-  const navigate = useNavigate()
-
-  // Authentication check removed - handled by parent Dashboard component
 
   const addVideoItem = () => {
     setVideoItems([...videoItems, { index: videoItems.length + 1, character: '' as Character, videoFile: null, videoId: undefined }])

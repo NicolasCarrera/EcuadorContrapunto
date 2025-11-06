@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import Textarea from '../components/Textarea'
@@ -28,16 +27,13 @@ function TextToVideoPage() {
   const [dialogos, setDialogos] = useState<Dialogo[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [, setAlertMessage] = useState<string | null>(null)
   const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null)
   const [isGeneratingMergedVideo, setIsGeneratingMergedVideo] = useState(false)
   const [generateMergedError, setGenerateMergedError] = useState<string | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
-  const navigate = useNavigate()
-
-  // Authentication check removed - handled by parent Dashboard component
 
   const addDialogo = () => {
     setDialogos([...dialogos, { index: dialogos.length + 1, character: '' as Character, dialog: '', videoFile: null, videoId: undefined, background: '' }])
