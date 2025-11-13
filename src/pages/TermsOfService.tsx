@@ -6,63 +6,113 @@ function TermsOfService() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Términos de Servicio
+            Términos de Servicio – Ecuador Contrapunto
           </h1>
           <p className="text-lg text-gray-600">
-            Ecuador Contrapunto - Generación de Videos
+            Última actualización: Enero 2025
           </p>
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-8">
-          <div className="prose prose-lg max-w-none">
-            <p className="text-gray-600 mb-6">
-              Los términos de servicio completos están disponibles en nuestros servidores oficiales.
-              Por favor, visite el siguiente enlace para revisar los términos completos:
+          <div className="prose prose-lg max-w-none text-gray-800">
+            <p className="mb-6">
+              Bienvenido(a) a <strong>Ecuador Contrapunto</strong>. Al acceder, ver, interactuar o participar con nuestro contenido en YouTube, TikTok, Instagram, X, Facebook u otras plataformas sociales (en adelante, las "Plataformas"), usted acepta estos <strong>Términos de Servicio</strong> ("Términos"). Si no está de acuerdo, por favor absténgase de usar nuestros canales.
             </p>
 
-            {import.meta.env.VITE_TERMS_URL &&
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                  📋 Términos de Servicio Oficiales
-                </h3>
-                <p className="text-blue-800 mb-4">
-                  Acceda a los términos completos de servicio de Ecuador Contrapunto
-                </p>
-                <a
-                  href={import.meta.env.VITE_TERMS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                >
-                  Ver Términos de Servicio
-                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-            }
+            <hr className="my-8 border-gray-300" />
 
-            <div className="border-t border-gray-200 pt-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Información General
-              </h2>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
-                <li>Esta aplicación permite generar videos a partir de texto o videos existentes</li>
-                <li>Los servicios están sujetos a los términos de Kolectivo Media LLC</li>
-                <li>El uso de la aplicación requiere una cuenta válida</li>
-                <li>Los contenidos generados son propiedad del usuario</li>
-                <li>Se aplican restricciones de uso ético y legal</li>
-              </ul>
-            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Objeto del Canal</h2>
+            <p className="mb-4">
+              Ecuador Contrapunto es un espacio de <strong>análisis político, social y económico</strong>, con enfoque en Ecuador y América Latina. El contenido incluye noticias, comentarios, diálogos entre personajes ficticios (como Jaguar y Cóndor), opinión editorial, humor satírico y material educativo de interés general.
+            </p>
 
-            <div className="border-t border-gray-200 pt-6 mt-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Contacto
-              </h2>
-              <p className="text-gray-700">
-                Para preguntas sobre estos términos o el servicio, por favor contacte al soporte técnico.
-              </p>
-            </div>
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">2. No Asesoría Profesional</h2>
+            <p className="mb-4">
+              El contenido de Ecuador Contrapunto <strong>no constituye asesoría legal, financiera, política ni profesional</strong>. Las opiniones expresadas son interpretaciones editoriales con fines informativos y de entretenimiento. El uso del contenido es <strong>bajo su propio riesgo</strong>.
+            </p>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Propiedad Intelectual</h2>
+            <p className="mb-4">
+              Todo el contenido publicado por Ecuador Contrapunto —incluyendo videos, guiones, voces, imágenes, audios generados o editados con IA, personajes, logos y textos— es <strong>propiedad del canal</strong> o se publica bajo licencias válidas.
+            </p>
+            <p className="mb-4"><strong>Está estrictamente prohibido:</strong></p>
+            <ul className="list-disc list-inside mb-4 ml-6">
+              <li>Reproducir, redistribuir o descargar contenido sin autorización previa por escrito.</li>
+              <li>Utilizar nuestros personajes, voces o estilo para crear contenido derivado sin permiso.</li>
+              <li>Usar nuestro contenido con fines comerciales.</li>
+            </ul>
+            <p className="mb-4"><strong>Usted puede:</strong></p>
+            <ul className="list-disc list-inside mb-4 ml-6">
+              <li>Compartir y difundir enlaces originales del contenido, siempre que no se altere ni edite.</li>
+            </ul>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Participación del Usuario</h2>
+            <p className="mb-4">
+              Al comentar o interactuar en nuestras Plataformas, usted acepta:
+            </p>
+            <ol className="list-decimal list-inside mb-4 ml-6">
+              <li>Mantener un trato respetuoso hacia otros usuarios y hacia el canal.</li>
+              <li>No publicar contenido ilegal, difamatorio, abusivo, discriminatorio, engañoso, spam o que infrinja derechos de terceros.</li>
+              <li>Ecuador Contrapunto se reserva el derecho de <strong>moderar, ocultar o eliminar</strong> comentarios o usuarios que violen estas reglas.</li>
+            </ol>
+            <p className="mb-4">
+              Todo comentario u opinión publicada por usuarios es responsabilidad exclusiva de quienes lo emiten.
+            </p>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Contenido de Terceros</h2>
+            <p className="mb-4">
+              En ocasiones podemos enlazar, citar o referirnos a contenido de terceros. Ecuador Contrapunto <strong>no controla</strong> ni es responsable de la exactitud, políticas o prácticas de dichos sitios o fuentes.
+            </p>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Uso de Inteligencia Artificial</h2>
+            <p className="mb-4">
+              Parte del contenido del canal (incluyendo voces, animaciones, guiones o gráficos) puede ser generado, editado o mejorado mediante herramientas de <strong>Inteligencia Artificial</strong>. El uso de IA es exclusivamente para fines creativos y editoriales. No se emplea para suplantar identidades reales sin consentimiento.
+            </p>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Limitación de Responsabilidad</h2>
+            <p className="mb-4">
+              Ecuador Contrapunto no será responsable por:
+            </p>
+            <ul className="list-disc list-inside mb-4 ml-6">
+              <li>Cualquier decisión tomada por el usuario basada en nuestro contenido.</li>
+              <li>Daños directos o indirectos relacionados con el uso o imposibilidad de uso del contenido.</li>
+              <li>Fallas técnicas o decisiones de moderación de las plataformas donde operamos.</li>
+            </ul>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Publicidad y Patrocinios</h2>
+            <p className="mb-4">
+              En ocasiones podemos incluir:
+            </p>
+            <ul className="list-disc list-inside mb-4 ml-6">
+              <li>Publicidad,</li>
+              <li>Colaboraciones,</li>
+              <li>Productos afiliados,</li>
+              <li>Opiniones patrocinadas.</li>
+            </ul>
+            <p className="mb-4">
+              Cuando corresponda, dichas relaciones serán divulgadas de acuerdo con las políticas de cada Plataforma.
+            </p>
+
+            <hr className="my-8 border-gray-300" />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Modificaciones a los Términos</h2>
+            <p className="mb-4">
+              Nos reservamos el derecho de modificar estos Términos en cualquier momento. El uso continuo del canal después de una actualización implica aceptación de los cambios.
+            </p>
           </div>
         </div>
       </div>
