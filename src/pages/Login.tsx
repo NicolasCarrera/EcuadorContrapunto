@@ -69,6 +69,18 @@ function Login() {
                 Iniciar sesión
               </Button>
             </form>
+            <div className="text-center mt-6">
+              <div className="text-sm text-gray-600">
+                Al iniciar sesión, aceptas nuestros{' '}
+                <a href={import.meta.env.VITE_TERMS_URL || "/terms"} className="text-blue-600 hover:text-blue-500 font-medium">
+                  Términos de Servicio
+                </a>{' '}
+                y{' '}
+                <a href={import.meta.env.VITE_PRIVACY_URL || "/privacy"} className="text-blue-600 hover:text-blue-500 font-medium">
+                  Política de Privacidad
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
